@@ -21,163 +21,264 @@ import {
 
 /* =========================================================
    $REKT DEVNET LAUNCHER
-   DEVNET ONLY — NO MAINNET TRANSACTIONS
+   DEVNET ONLY
    ========================================================= */
 
-const NETWORK = "devnet";
-const RPC_URL = clusterApiUrl(NETWORK);
-
-const connection = new Connection(RPC_URL, "confirmed");
+const connection = new Connection(
+  clusterApiUrl("devnet"),
+  "confirmed"
+);
 
 const DECIMALS = 6;
 const SUPPLY = 100_000_000n;
-const RAW_SUPPLY = SUPPLY * 10n ** BigInt(DECIMALS);
+const RAW_SUPPLY =
+  SUPPLY * 10n ** BigInt(DECIMALS);
+
+const connectBtn =
+  document.getElementById("connectBtn");
+
+const createBtn =
+  document.getElementById("createBtn");
+
+const walletEl =
+  document.getElementById("wallet");
+
+const statusEl =
+  document.getElementById("status");
+
+const resultEl =
+  document.getElementById("result");
 
 let provider = null;
-let walletPublicKey = null;
+let owner = null;
 let creating = false;
 
-/* ---------------- DOM ---------------- */
 
-const connectBtn = document.getElementById("connectBtn");
-const createBtn = document.getElementById("createBtn");
-const walletEl = document.getElementById("wallet");
-const statusEl = document.getElementById("status");
-const resultEl = document.getElementById("result");
+/* =========================================================
+   UI
+   ========================================================= */
 
-function setStatus(message) {
-  if (statusEl) statusEl.textContent = message;
+function status(message) {
+  if (statusEl) {
+    statusEl.textContent = message;
+  }
 }
 
-function setResult(html = "") {
-  if (resultEl) resultEl.innerHTML = html;
+function result(html = "") {
+  if (resultEl) {
+    resultEl.innerHTML = html;
+  }
 }
 
-/* ---------------- PHANTOM ---------------- */
 
-function getProvider() {
-  if (window.phantom?.solana?.isPhantom) {
+/* =========================================================
+   PHANTOM
+   ========================================================= */
+
+function getPhantom() {
+
+  if (
+    window.phantom &&
+    window.phantom.solana &&
+    window.phantom.solana.isPhantom
+  ) {
     return window.phantom.solana;
   }
 
-  if (window.solana?.isPhantom) {
+  if (
+    window.solana &&
+    window.solana.isPhantom
+  ) {
     return window.solana;
   }
 
   return null;
 }
 
-function openInPhantom() {
-  const currentUrl = window.location.href;
 
-  const phantomUrl =
+/* =========================================================
+   OPEN SITE INSIDE PHANTOM
+   ========================================================= */
+
+function openInsidePhantom() {
+
+  const here = window.location.href;
+
+  const url =
     "https://phantom.app/ul/browse/" +
-    encodeURIComponent(currentUrl) +
+    encodeURIComponent(here) +
     "?ref=" +
-    encodeURIComponent(currentUrl);
+    encodeURIComponent(here);
 
-  window.location.href = phantomUrl;
+  window.location.href = url;
 }
 
-/* ---------------- BALANCE ---------------- */
+
+/* =========================================================
+   BALANCE
+   ========================================================= */
 
 async function refreshBalance() {
-  if (!walletPublicKey) return;
+
+  if (!owner) return;
 
   try {
-    const lamports = await connection.getBalance(
-      walletPublicKey,
-      "confirmed"
-    );
 
-    const sol = lamports / LAMPORTS_PER_SOL;
+    const lamports =
+      await connection.getBalance(
+        owner,
+        "confirmed"
+      );
+
+    const sol =
+      lamports / LAMPORTS_PER_SOL;
 
     if (walletEl) {
+
       walletEl.innerHTML =
-        `Wallet:<br>${walletPublicKey.toBase58()}` +
-        `<br><br>Devnet balance: <strong>${sol.toFixed(4)} SOL</strong>`;
+        "Wallet:<br>" +
+        owner.toBase58() +
+        "<br><br>" +
+        "Devnet balance: <strong>" +
+        sol.toFixed(4) +
+        " SOL</strong>";
     }
 
-    return sol;
-  } catch (err) {
-    console.error("Balance error:", err);
-    return null;
+  } catch (e) {
+
+    console.error(
+      "Balance error:",
+      e
+    );
   }
 }
 
-/* ---------------- CONNECT ---------------- */
+
+/* =========================================================
+   CONNECT
+   ========================================================= */
 
 async function connectWallet() {
+
   try {
-    provider = getProvider();
+
+    provider = getPhantom();
+
+    /*
+      Safari normally does not expose
+      Phantom provider.
+
+      Open the same page inside
+      Phantom's browser.
+    */
 
     if (!provider) {
-      openInPhantom();
+
+      status(
+        "Opening launcher inside Phantom..."
+      );
+
+      openInsidePhantom();
+
       return;
     }
 
-    setStatus("Connecting Phantom...");
+    status(
+      "Waiting for Phantom..."
+    );
 
-    const response = await provider.connect();
+    /*
+      Explicit user-triggered connection.
+      No automatic wallet request.
+    */
 
-    walletPublicKey = new PublicKey(
+    const response =
+      await provider.connect();
+
+    owner = new PublicKey(
       response.publicKey.toString()
     );
 
-    connectBtn.textContent = "Phantom connected";
+    connectBtn.textContent =
+      "Phantom connected";
+
     createBtn.disabled = false;
 
-    setStatus("Phantom connected.");
+    status(
+      "Phantom connected."
+    );
 
     await refreshBalance();
 
-  } catch (err) {
-    console.error(err);
+  } catch (e) {
 
-    setStatus(
+    console.error(
+      "Connect error:",
+      e
+    );
+
+    status(
       "Connection failed: " +
-      (err?.message || String(err))
+      (e?.message || String(e))
     );
   }
 }
 
-/* =========================================================
-   BUILD TRANSACTION
 
-   IMPORTANT:
-   Blockhash is obtained immediately before signing.
+/* =========================================================
+   BUILD FRESH TRANSACTION
    ========================================================= */
 
-async function buildCreateMintTransaction(mintKeypair) {
-  const owner = walletPublicKey;
+async function buildTransaction(
+  mintKeypair
+) {
+
+  /*
+    All expensive RPC preparation happens
+    BEFORE requesting the blockhash.
+  */
 
   const rent =
-    await connection.getMinimumBalanceForRentExemption(
-      MINT_SIZE
+    await connection
+      .getMinimumBalanceForRentExemption(
+        MINT_SIZE
+      );
+
+  const ata =
+    await getAssociatedTokenAddress(
+      mintKeypair.publicKey,
+      owner,
+      false,
+      TOKEN_PROGRAM_ID
     );
 
-  const ata = await getAssociatedTokenAddress(
-    mintKeypair.publicKey,
-    owner,
-    false,
-    TOKEN_PROGRAM_ID
-  );
+  const tx =
+    new Transaction();
 
-  const tx = new Transaction();
-
-  /* Create mint account */
+  /*
+    1. Create mint account
+  */
 
   tx.add(
     SystemProgram.createAccount({
       fromPubkey: owner,
-      newAccountPubkey: mintKeypair.publicKey,
+      newAccountPubkey:
+        mintKeypair.publicKey,
       space: MINT_SIZE,
       lamports: rent,
-      programId: TOKEN_PROGRAM_ID,
+      programId:
+        TOKEN_PROGRAM_ID,
     })
   );
 
-  /* Initialize mint */
+
+  /*
+    2. Initialize mint
+
+    Mint authority = wallet
+    Freeze authority = wallet
+    They are revoked below.
+  */
 
   tx.add(
     createInitializeMintInstruction(
@@ -189,7 +290,10 @@ async function buildCreateMintTransaction(mintKeypair) {
     )
   );
 
-  /* Create user's token account */
+
+  /*
+    3. Create ATA
+  */
 
   tx.add(
     createAssociatedTokenAccountInstruction(
@@ -201,7 +305,10 @@ async function buildCreateMintTransaction(mintKeypair) {
     )
   );
 
-  /* Mint 100M */
+
+  /*
+    4. Mint exactly 100M REKT
+  */
 
   tx.add(
     createMintToInstruction(
@@ -214,7 +321,11 @@ async function buildCreateMintTransaction(mintKeypair) {
     )
   );
 
-  /* Permanently revoke mint authority */
+
+  /*
+    5. Permanently revoke
+       additional minting.
+  */
 
   tx.add(
     createSetAuthorityInstruction(
@@ -227,7 +338,11 @@ async function buildCreateMintTransaction(mintKeypair) {
     )
   );
 
-  /* Permanently revoke freeze authority */
+
+  /*
+    6. Permanently revoke
+       freeze authority.
+  */
 
   tx.add(
     createSetAuthorityInstruction(
@@ -240,25 +355,35 @@ async function buildCreateMintTransaction(mintKeypair) {
     )
   );
 
-  /*
-   * Get the blockhash LAST.
-   * This reduces the chance that Phantom receives
-   * an already stale blockhash.
-   */
 
-  const latest = await connection.getLatestBlockhash(
-    "confirmed"
-  );
+  /*
+    CRITICAL FIX:
+
+    Fetch blockhash LAST,
+    immediately before Phantom signing.
+  */
+
+  const latest =
+    await connection.getLatestBlockhash(
+      "processed"
+    );
 
   tx.feePayer = owner;
-  tx.recentBlockhash = latest.blockhash;
+
+  tx.recentBlockhash =
+    latest.blockhash;
+
 
   /*
-   * Mint account must sign because SystemProgram
-   * creates this new account.
-   */
+    Mint account signs locally.
 
-  tx.partialSign(mintKeypair);
+    This is NOT the Phantom private key.
+  */
+
+  tx.partialSign(
+    mintKeypair
+  );
+
 
   return {
     tx,
@@ -267,159 +392,256 @@ async function buildCreateMintTransaction(mintKeypair) {
   };
 }
 
-/* ---------------- SEND ---------------- */
 
-async function signSendAndConfirm(tx, latest) {
-  setStatus("Waiting for Phantom approval...");
+/* =========================================================
+   SIGN + SEND
+   ========================================================= */
+
+async function signAndSend(
+  tx,
+  latest
+) {
+
+  status(
+    "Approve the Devnet transaction in Phantom..."
+  );
 
   /*
-   * Phantom signs.
-   * It does NOT receive or expose any private key.
-   */
+    Explicit Phantom approval.
+  */
 
-  const signed = await provider.signTransaction(tx);
+  const signed =
+    await provider.signTransaction(
+      tx
+    );
 
-  setStatus("Sending transaction to Solana Devnet...");
 
-  const signature = await connection.sendRawTransaction(
-    signed.serialize(),
-    {
-      skipPreflight: false,
-      preflightCommitment: "confirmed",
-      maxRetries: 5,
-    }
-  );
+  /*
+    Before broadcasting, check that
+    this blockhash is still alive.
+  */
 
-  setStatus("Confirming transaction...");
+  const height =
+    await connection.getBlockHeight(
+      "processed"
+    );
 
-  const confirmation = await connection.confirmTransaction(
-    {
-      signature,
-      blockhash: latest.blockhash,
-      lastValidBlockHeight: latest.lastValidBlockHeight,
-    },
-    "confirmed"
-  );
+  if (
+    height >
+    latest.lastValidBlockHeight
+  ) {
 
-  if (confirmation.value.err) {
     throw new Error(
-      "Transaction failed: " +
-      JSON.stringify(confirmation.value.err)
+      "BLOCKHASH_EXPIRED_BEFORE_SEND"
     );
   }
 
+
+  status(
+    "Sending to Solana Devnet..."
+  );
+
+  const signature =
+    await connection.sendRawTransaction(
+      signed.serialize(),
+      {
+        skipPreflight: false,
+        preflightCommitment:
+          "processed",
+        maxRetries: 5,
+      }
+    );
+
+
+  status(
+    "Confirming transaction..."
+  );
+
+  const confirmation =
+    await connection.confirmTransaction(
+      {
+        signature,
+        blockhash:
+          latest.blockhash,
+        lastValidBlockHeight:
+          latest.lastValidBlockHeight,
+      },
+      "confirmed"
+    );
+
+
+  if (
+    confirmation.value.err
+  ) {
+
+    throw new Error(
+      "Transaction failed: " +
+      JSON.stringify(
+        confirmation.value.err
+      )
+    );
+  }
+
+
   return signature;
 }
+
 
 /* =========================================================
    CREATE REKT
    ========================================================= */
 
 async function createREKT() {
+
   if (creating) return;
 
-  if (!provider || !walletPublicKey) {
-    setStatus("Connect Phantom first.");
+  if (
+    !provider ||
+    !owner
+  ) {
+
+    status(
+      "Connect Phantom first."
+    );
+
     return;
   }
 
+
   creating = true;
+
   createBtn.disabled = true;
 
-  setResult("");
+  result("");
+
 
   /*
-   * Generate mint keypair locally.
-   *
-   * This is NOT the user's wallet private key.
-   * It is only the temporary signing key required
-   * to create the new mint account.
-   */
+    One mint address per creation attempt.
+  */
 
-  const mintKeypair = Keypair.generate();
+  const mintKeypair =
+    Keypair.generate();
+
 
   try {
-    const balance = await connection.getBalance(
-      walletPublicKey,
-      "confirmed"
-    );
 
-    if (balance <= 0) {
+    /*
+      Verify Devnet balance.
+    */
+
+    const balance =
+      await connection.getBalance(
+        owner,
+        "confirmed"
+      );
+
+    if (
+      balance <= 0
+    ) {
+
       throw new Error(
-        "No Devnet SOL. Get test SOL before creating REKT."
+        "No Devnet SOL available."
       );
     }
 
-    /*
-     * First attempt.
-     */
 
-    let built = await buildCreateMintTransaction(
-      mintKeypair
-    );
+    /*
+      Build transaction with
+      a fresh blockhash.
+    */
+
+    let built =
+      await buildTransaction(
+        mintKeypair
+      );
+
 
     let signature;
 
+
     try {
-      signature = await signSendAndConfirm(
-        built.tx,
-        built.latest
-      );
 
-    } catch (firstError) {
-      const msg =
-        firstError?.message ||
-        String(firstError);
-
-      console.warn(
-        "First transaction attempt failed:",
-        firstError
-      );
-
-      /*
-       * Retry ONLY when the problem is an expired/
-       * unknown blockhash.
-       */
-
-      if (
-        msg.toLowerCase().includes("blockhash") ||
-        msg.toLowerCase().includes("expired")
-      ) {
-        setStatus(
-          "Blockhash expired. Preparing a fresh transaction..."
-        );
-
-        /*
-         * IMPORTANT:
-         * Build a completely fresh Transaction object.
-         */
-
-        built = await buildCreateMintTransaction(
-          mintKeypair
-        );
-
-        signature = await signSendAndConfirm(
+      signature =
+        await signAndSend(
           built.tx,
           built.latest
         );
 
+    } catch (e) {
+
+      const message =
+        (
+          e?.message ||
+          String(e)
+        ).toLowerCase();
+
+
+      /*
+        IMPORTANT:
+
+        We do NOT silently send anything.
+
+        If blockhash expired before broadcast,
+        build a new transaction and Phantom
+        will request approval again.
+      */
+
+      if (
+        message.includes(
+          "blockhash"
+        ) ||
+        message.includes(
+          "expired"
+        )
+      ) {
+
+        status(
+          "Blockhash expired. Preparing a fresh Devnet transaction..."
+        );
+
+
+        built =
+          await buildTransaction(
+            mintKeypair
+          );
+
+
+        signature =
+          await signAndSend(
+            built.tx,
+            built.latest
+          );
+
       } else {
-        throw firstError;
+
+        throw e;
       }
     }
 
-    const mintAddress =
-      mintKeypair.publicKey.toBase58();
 
-    const explorerMint =
-      `https://explorer.solana.com/address/${mintAddress}?cluster=devnet`;
+    const mint =
+      mintKeypair.publicKey
+        .toBase58();
 
-    const explorerTx =
-      `https://explorer.solana.com/tx/${signature}?cluster=devnet`;
 
-    setStatus("100,000,000 REKT created on Devnet.");
+    const mintExplorer =
+      "https://explorer.solana.com/address/" +
+      mint +
+      "?cluster=devnet";
 
-    setResult(`
+
+    const txExplorer =
+      "https://explorer.solana.com/tx/" +
+      signature +
+      "?cluster=devnet";
+
+
+    status(
+      "100,000,000 REKT created on Devnet."
+    );
+
+
+    result(`
       <div style="
         margin-top:16px;
         padding:16px;
@@ -428,169 +650,198 @@ async function createREKT() {
         word-break:break-all;
       ">
 
-        <strong>✅ REKT CREATED — DEVNET</strong>
+        <strong>
+          ✅ REKT CREATED — DEVNET
+        </strong>
 
         <br><br>
 
-        <strong>Mint:</strong><br>
-        ${mintAddress}
+        <strong>Mint address:</strong>
+        <br>
+        ${mint}
 
         <br><br>
 
-        <strong>Supply:</strong><br>
+        <strong>Supply:</strong>
+        <br>
         100,000,000 REKT
 
         <br><br>
 
-        <strong>Decimals:</strong><br>
+        <strong>Decimals:</strong>
+        <br>
         6
 
         <br><br>
 
-        <strong>Mint authority:</strong><br>
+        <strong>Mint authority:</strong>
+        <br>
         REVOKED
 
         <br><br>
 
-        <strong>Freeze authority:</strong><br>
+        <strong>Freeze authority:</strong>
+        <br>
         REVOKED
 
         <br><br>
 
         <a
-          href="${explorerMint}"
+          href="${mintExplorer}"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Open REKT Mint in Solana Explorer
+          Open REKT Mint
         </a>
 
         <br><br>
 
         <a
-          href="${explorerTx}"
+          href="${txExplorer}"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Open creation transaction
+          Open transaction
         </a>
 
       </div>
     `);
 
+
     await refreshBalance();
 
-  } catch (err) {
-    console.error("CREATE ERROR:", err);
+
+  } catch (e) {
+
+    console.error(
+      "REKT creation error:",
+      e
+    );
+
 
     let message =
-      err?.message ||
-      String(err);
+      e?.message ||
+      String(e);
 
-    /*
-     * Some Solana errors contain extremely long
-     * diagnostic text. Keep UI readable.
-     */
 
-    if (message.length > 700) {
+    if (
+      message.length > 600
+    ) {
+
       message =
-        message.substring(0, 700) + "...";
+        message.slice(
+          0,
+          600
+        ) +
+        "...";
     }
 
-    setStatus(
-      "Creation failed: " + message
+
+    status(
+      "Creation failed: " +
+      message
     );
 
   } finally {
+
     creating = false;
 
-    if (walletPublicKey) {
-      createBtn.disabled = false;
+
+    if (owner) {
+
+      createBtn.disabled =
+        false;
     }
   }
 }
 
-/* ---------------- EVENTS ---------------- */
 
-connectBtn?.addEventListener(
-  "click",
-  connectWallet
-);
+/* =========================================================
+   BUTTONS
+   ========================================================= */
 
-createBtn?.addEventListener(
-  "click",
-  createREKT
-);
+if (connectBtn) {
 
-/* ---------------- PHANTOM EVENTS ---------------- */
+  connectBtn.onclick =
+    connectWallet;
+}
 
-const initialProvider = getProvider();
 
-if (initialProvider) {
-  provider = initialProvider;
+if (createBtn) {
+
+  createBtn.onclick =
+    createREKT;
+}
+
+
+/* =========================================================
+   WALLET ACCOUNT CHANGE
+   ========================================================= */
+
+const detected =
+  getPhantom();
+
+
+if (detected) {
+
+  provider = detected;
+
 
   provider.on?.(
     "accountChanged",
-    async (publicKey) => {
+    async publicKey => {
+
       if (publicKey) {
-        walletPublicKey =
-          new PublicKey(publicKey.toString());
+
+        owner =
+          new PublicKey(
+            publicKey.toString()
+          );
 
         connectBtn.textContent =
           "Phantom connected";
 
-        createBtn.disabled = false;
+        createBtn.disabled =
+          false;
+
+        status(
+          "Phantom connected."
+        );
 
         await refreshBalance();
 
       } else {
-        walletPublicKey = null;
+
+        owner = null;
 
         connectBtn.textContent =
           "Connect Phantom";
 
-        createBtn.disabled = true;
+        createBtn.disabled =
+          true;
 
         if (walletEl) {
+
           walletEl.textContent =
             "Wallet: not connected";
         }
+
+        status(
+          "Wallet disconnected."
+        );
       }
     }
   );
 }
 
-/* ---------------- AUTO CONNECT ---------------- */
 
-(async () => {
-  try {
-    provider = getProvider();
+/*
+  IMPORTANT:
 
-    if (!provider) return;
+  No provider.connect() here.
 
-    const response = await provider.connect({
-      onlyIfTrusted: true,
-    });
+  Phantom is contacted ONLY after the
+  user explicitly presses Connect Phantom.
+*/
 
-    if (!response?.publicKey) return;
-
-    walletPublicKey =
-      new PublicKey(
-        response.publicKey.toString()
-      );
-
-    connectBtn.textContent =
-      "Phantom connected";
-
-    createBtn.disabled = false;
-
-    setStatus("Phantom connected.");
-
-    await refreshBalance();
-
-  } catch {
-    /*
-     * Normal when the site has not yet been trusted.
-     */
-  }
-})();
+createBtn.disabled = true;
