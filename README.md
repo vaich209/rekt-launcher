@@ -1,4 +1,6 @@
-# REKT v13 — one-button Devnet flow
-Both buttons are active on load. `Create Final REKT` itself requests Phantom connection if needed.
-Flow: connect/sign -> create mint + 100M -> create metadata -> revoke mint/freeze -> verify.
-DEVNET ONLY. Phantom approval/signatures are still required; a website cannot safely transact from the wallet without wallet authorization.
+# REKT v14 — startup fix
+Critical fix: Metaplex/Umi modules are no longer imported during page startup.
+This prevents a Metaplex CDN/import failure from killing the Connect Phantom event handlers.
+The page must show: "v14 JavaScript loaded..." when app.js is executing.
+Metaplex is loaded only at the metadata step, after wallet connection and mint creation.
+DEVNET ONLY.

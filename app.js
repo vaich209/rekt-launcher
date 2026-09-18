@@ -1,13 +1,9 @@
 import {Connection,PublicKey,Keypair,SystemProgram,Transaction,TransactionInstruction,clusterApiUrl,LAMPORTS_PER_SOL} from "https://esm.sh/@solana/web3.js@1.98.4";
 import {TOKEN_PROGRAM_ID,MINT_SIZE,AuthorityType,getAssociatedTokenAddress,createInitializeMintInstruction,createAssociatedTokenAccountInstruction,createMintToInstruction,createSetAuthorityInstruction} from "https://esm.sh/@solana/spl-token@0.4.14";
-import {createUmi} from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
-import {walletAdapterIdentity} from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
-import {mplTokenMetadata,createV1,TokenStandard} from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.4.0";
-import {publicKey,createSignerFromKeypair,signerIdentity} from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
 
 const RPC=clusterApiUrl("devnet"), connection=new Connection(RPC,"confirmed");
-const URI="https://vaich209.github.io/rekt-launcher/rekt.json?v=13";
-const DAPP="https://vaich209.github.io/rekt-launcher/?v=13";
+const URI="https://vaich209.github.io/rekt-launcher/rekt.json?v=14";
+const DAPP="https://vaich209.github.io/rekt-launcher/?v=14";
 const RAW=100_000_000n*10n**6n;
 const connectBtn=document.getElementById("connectBtn"),createBtn=document.getElementById("createBtn"),walletEl=document.getElementById("wallet"),statusEl=document.getElementById("status"),resultEl=document.getElementById("result");
 let provider=null,owner=null,busy=false;
@@ -52,6 +48,12 @@ async function create(){
   await walletSend(tx,mint);
 
   status("2/4 Creating Metaplex metadata while Mint Authority still exists...");
+  const [{createUmi},{walletAdapterIdentity},{mplTokenMetadata,createV1,TokenStandard},{publicKey}] = await Promise.all([
+    import("https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1"),
+    import("https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1"),
+    import("https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.4.0"),
+    import("https://esm.sh/@metaplex-foundation/umi@1.4.1")
+  ]);
   const umi=createUmi(RPC).use(mplTokenMetadata()).use(walletAdapterIdentity(provider));
   await createV1(umi,{mint:publicKey(mint.publicKey.toBase58()),authority:umi.identity,payer:umi.identity,updateAuthority:umi.identity,name:"REKT",symbol:"REKT",uri:URI,sellerFeeBasisPoints:0,tokenStandard:TokenStandard.Fungible}).sendAndConfirm(umi);
 
@@ -79,3 +81,4 @@ async function create(){
  finally{busy=false;createBtn.disabled=false}
 }
 connectBtn.addEventListener("click",connect);createBtn.addEventListener("click",create);
+status("v14 JavaScript loaded. Connect Phantom or press Create Final REKT.");
