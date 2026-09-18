@@ -1,12 +1,16 @@
 # $REKT Devnet Launcher
 
-Clean Solana Devnet connection test.
+Complete Solana Devnet prototype.
 
-- REKT / REKT
-- Planned supply: 100,000,000
+- Name / symbol: REKT / REKT
+- Supply: 100,000,000
 - Decimals: 6
-- Devnet only
-- Phantom connection/deeplink test
-- Token creation intentionally disabled until connection is verified
-- No seed phrase or private key requested or stored
+- Network: Solana Devnet only
+- Phantom wallet connection
+- Creates the initial supply in one Devnet transaction
+- Mint authority revoked in the creation transaction
+- Freeze authority revoked in the creation transaction
+- No wallet seed phrase/private key requested or stored
 - No mainnet transactions
+
+Experimental Devnet software. Devnet tokens have no monetary value.
