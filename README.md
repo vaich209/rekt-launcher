@@ -1,16 +1,13 @@
-# $REKT Devnet Launcher
+# REKT v11 — Devnet Metadata
 
-Complete Solana Devnet prototype.
+Existing Mint: `Ea8Yn1sQ6QrPYNREYPTbVYxVgkhUuiFqwyfY1K2oceUo`
 
-- Name / symbol: REKT / REKT
-- Supply: 100,000,000
-- Decimals: 6
+This package does not create another token. It adds Metaplex Token Metadata to the existing Devnet mint:
+- Name: REKT
+- Symbol: REKT
+- URI: `https://vaich209.github.io/rekt-launcher/rekt.json?v=11`
+- Image: `https://vaich209.github.io/rekt-launcher/rekt.png?v=11`
+- Update authority: connected Phantom wallet
 - Network: Solana Devnet only
-- Phantom wallet connection
-- Creates the initial supply in one Devnet transaction
-- Mint authority revoked in the creation transaction
-- Freeze authority revoked in the creation transaction
-- No wallet seed phrase/private key requested or stored
-- No mainnet transactions
 
-Experimental Devnet software. Devnet tokens have no monetary value.
+Upload all files to the root of `vaich209/rekt-launcher` before pressing Add REKT Metadata.

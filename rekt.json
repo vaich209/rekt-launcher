@@ -1,0 +1,30 @@
+{
+  "name": "REKT",
+  "symbol": "REKT",
+  "description": "STILL HERE. Same degen. Different day.",
+  "image": "https://vaich209.github.io/rekt-launcher/rekt.png?v=11",
+  "external_url": "https://vaich209.github.io/rekt-launcher/",
+  "attributes": [
+    {
+      "trait_type": "Network",
+      "value": "Solana Devnet"
+    },
+    {
+      "trait_type": "Supply",
+      "value": "100,000,000"
+    },
+    {
+      "trait_type": "Decimals",
+      "value": "6"
+    }
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "https://vaich209.github.io/rekt-launcher/rekt.png?v=11",
+        "type": "image/png"
+      }
+    ],
+    "category": "image"
+  }
+}

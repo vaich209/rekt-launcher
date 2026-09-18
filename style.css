@@ -1,13 +1,1 @@
-:root{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#fafafa;background:#050507}
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;display:grid;place-items:center;padding:22px;background:radial-gradient(circle at top,#321014 0,#09090b 42%)}
-.card{width:min(100%,430px);background:#111114;border:1px solid #2b2b31;border-radius:28px;padding:28px;box-shadow:0 24px 80px #000}
-.badge{font-size:12px;letter-spacing:.12em;color:#ff6b6b}.coin{font-size:72px;margin-top:22px}
-h1{font-size:58px;margin:4px 0 0}.tag{font-size:25px;font-weight:900;margin:0}.sub{color:#999}
-section{margin:25px 0;background:#18181c;border-radius:18px;padding:8px 16px}
-section div{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #29292e}
-section div:last-child{border:0}span{color:#92929b}
-button{width:100%;border:0;border-radius:16px;padding:17px;margin-top:11px;font-size:17px;font-weight:800;background:#fff;color:#111}
-#createBtn{background:#e53935;color:#fff}button:disabled{opacity:.4}
-#wallet,#status,.warning{font-size:13px;overflow-wrap:anywhere}#status{margin-top:10px;color:#bbb}.warning{color:#888;margin-top:20px}
-#result{font-size:13px}a{color:#ff706b}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:#050507;color:#fafafa;font-family:Inter,system-ui,-apple-system,sans-serif}.card{width:min(100%,430px);background:#111114;border:1px solid #29292e;border-radius:28px;padding:26px}.badge{font-size:12px;letter-spacing:.12em;color:#4cff88}.logo{width:100%;border-radius:22px;display:block;margin:20px 0}h1{font-size:56px;margin:0}.tag{font-size:24px;font-weight:900;margin:0}.sub,.warning,#status{color:#999}section{margin:22px 0;background:#18181c;border-radius:18px;padding:8px 15px}section div{display:flex;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid #29292e}section div:last-child{border:0}section span{color:#999}.mint{font-size:11px;overflow-wrap:anywhere;text-align:right}button{width:100%;padding:17px;margin-top:11px;border:0;border-radius:16px;font-size:17px;font-weight:800}#metadataBtn{background:#35e879;color:#07120b}button:disabled{opacity:.4}#wallet,#status,#result,.warning{font-size:13px;overflow-wrap:anywhere}a{color:#4cff88}
