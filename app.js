@@ -6,8 +6,8 @@ import {mplTokenMetadata,createV1,TokenStandard} from "https://esm.sh/@metaplex-
 import {publicKey,createSignerFromKeypair,signerIdentity} from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
 
 const RPC=clusterApiUrl("devnet"), connection=new Connection(RPC,"confirmed");
-const URI="https://vaich209.github.io/rekt-launcher/rekt.json?v=12";
-const DAPP="https://vaich209.github.io/rekt-launcher/?v=12";
+const URI="https://vaich209.github.io/rekt-launcher/rekt.json?v=13";
+const DAPP="https://vaich209.github.io/rekt-launcher/?v=13";
 const RAW=100_000_000n*10n**6n;
 const connectBtn=document.getElementById("connectBtn"),createBtn=document.getElementById("createBtn"),walletEl=document.getElementById("wallet"),statusEl=document.getElementById("status"),resultEl=document.getElementById("result");
 let provider=null,owner=null,busy=false;
@@ -26,7 +26,18 @@ async function walletSend(tx,extraSigner){
  if(c.value.err)throw new Error(JSON.stringify(c.value.err));return sig;
 }
 async function create(){
- if(busy||!owner)return;busy=true;createBtn.disabled=true;resultEl.innerHTML="";
+ if(busy)return;
+ if(!provider||!owner){
+   provider=phantom();
+   if(!provider){ status("Opening Phantom..."); openPhantom(); return; }
+   try{
+     const r=await provider.connect();
+     owner=new PublicKey(r.publicKey.toString());
+     connectBtn.textContent="Phantom connected";
+     await refresh();
+   }catch(e){ status("Phantom connection required: "+(e?.message||String(e))); return; }
+ }
+ busy=true;createBtn.disabled=true;resultEl.innerHTML="";
  const mint=Keypair.generate();
  try{
   status("1/4 Creating Mint and minting exactly 100M REKT...");

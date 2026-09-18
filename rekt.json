@@ -2,7 +2,7 @@
   "name": "REKT",
   "symbol": "REKT",
   "description": "STILL HERE. Same degen. Different day.",
-  "image": "https://vaich209.github.io/rekt-launcher/rekt.png?v=12",
+  "image": "https://vaich209.github.io/rekt-launcher/rekt.png?v=13",
   "external_url": "https://vaich209.github.io/rekt-launcher/",
   "attributes": [
     {
@@ -21,7 +21,7 @@
   "properties": {
     "files": [
       {
-        "uri": "https://vaich209.github.io/rekt-launcher/rekt.png?v=12",
+        "uri": "https://vaich209.github.io/rekt-launcher/rekt.png?v=13",
         "type": "image/png"
       }
     ],
