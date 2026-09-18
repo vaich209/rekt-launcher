@@ -1,18 +1,12 @@
 # $REKT Devnet Launcher
 
-Mobile-first Solana devnet proof of concept.
+Clean Solana Devnet connection test.
 
-- Token: REKT (REKT)
-- Supply: 100,000,000
+- REKT / REKT
+- Planned supply: 100,000,000
 - Decimals: 6
-- Network: Solana Devnet only
-- Phantom signs locally
-- Mint authority revoked after initial mint
-- Freeze authority revoked
-- No seed phrase/private key stored
+- Devnet only
+- Phantom connection/deeplink test
+- Token creation intentionally disabled until connection is verified
+- No seed phrase or private key requested or stored
 - No mainnet transactions
-
-## Publish with GitHub Pages
-Upload the files to the repository root, then enable Pages from the `main` branch/root.
-
-This is experimental devnet software. The devnet token has no monetary value.
